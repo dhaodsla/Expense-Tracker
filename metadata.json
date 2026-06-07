@@ -1,0 +1,6 @@
+{
+  "name": "우리둘 가계부",
+  "description": "mason과 선영을 위한 따뜻하고 간편한 2인용 개인별 지출관리 모바일 앱입니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

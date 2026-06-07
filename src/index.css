@@ -1,0 +1,21 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import "tailwindcss";
+
+@theme {
+  --color-cream-50: #FCFbf7;
+  --color-cream-100: #f4f0e6;
+  --color-cream-200: #e8e1cf;
+  --color-sage-400: #a3b899;
+  --color-sage-500: #8ba37e;
+  --color-sage-600: #6f8664;
+  --color-mocha-700: #7a6350;
+  --color-mocha-800: #5c4a3d;
+  --color-mocha-900: #42352b;
+  --font-sans: "Pretendard", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-cream-50 text-mocha-900;
+  }
+}
