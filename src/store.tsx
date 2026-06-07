@@ -4,6 +4,7 @@ import { Expense, ExpenseType } from './types';
 interface StoreContextType {
   expenses: Expense[];
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
+  updateExpense: (id: string, expense: Partial<Omit<Expense, 'id' | 'createdAt'>>) => void;
   deleteExpense: (id: string) => void;
 }
 
@@ -37,12 +38,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setExpenses((prev) => [...prev, newExpense]);
   };
 
+  const updateExpense = (id: string, updatedData: Partial<Omit<Expense, 'id' | 'createdAt'>>) => {
+    setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updatedData } : e)));
+  };
+
   const deleteExpense = (id: string) => {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
 
   return (
-    <StoreContext.Provider value={{ expenses, addExpense, deleteExpense }}>
+    <StoreContext.Provider value={{ expenses, addExpense, updateExpense, deleteExpense }}>
       {children}
     </StoreContext.Provider>
   );

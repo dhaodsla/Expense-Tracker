@@ -3,23 +3,30 @@ import { useState } from 'react';
 import { Expense, Category, ExpenseType } from '../../types';
 import { useStore } from '../../store';
 import { CategoryIcons } from '../ui/icons';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Search } from 'lucide-react';
 
 interface ExpenseViewProps {
   type: ExpenseType;
   title: string;
   isShared?: boolean;
+  onEdit: (expense: Expense) => void;
 }
 
-export function ExpenseView({ type, title, isShared }: ExpenseViewProps) {
+export function ExpenseView({ type, title, isShared, onEdit }: ExpenseViewProps) {
   const { expenses, deleteExpense } = useStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCategory, setSelectedCategory] = useState<Category | '전체'>('전체');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredExpenses = expenses
     .filter(e => e.type === type)
     .filter(e => isSameMonth(parseISO(e.date), currentDate))
     .filter(e => selectedCategory === '전체' || e.category === selectedCategory)
+    .filter(e => {
+      if (!searchQuery) return true;
+      const targetStr = `${e.place || ''} ${e.memo || ''}`.toLowerCase();
+      return targetStr.includes(searchQuery.toLowerCase());
+    })
     .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
 
   const totalAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -58,6 +65,19 @@ export function ExpenseView({ type, title, isShared }: ExpenseViewProps) {
       </section>
 
       {monthCategories.length > 0 && (
+        <div className="mb-4 relative shrink-0">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-200" size={20} />
+          <input 
+            type="text" 
+            placeholder="사용처, 메모 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white outline-none border border-transparent focus:border-sage-200 text-mocha-900 rounded-full py-3 pl-12 pr-4 shadow-sm placeholder:text-mocha-700/40 text-sm transition-all"
+          />
+        </div>
+      )}
+
+      {monthCategories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 shrink-0 no-scrollbar">
           <FilterBadge 
             active={selectedCategory === '전체'} 
@@ -79,10 +99,15 @@ export function ExpenseView({ type, title, isShared }: ExpenseViewProps) {
 
       <div className="flex-1 overflow-y-auto space-y-3 pb-8 no-scrollbar pr-1">
         {filteredExpenses.length === 0 ? (
-          <div className="text-center text-mocha-700 py-10">지출 내역이 없습니다.</div>
+          <div className="text-center text-mocha-700 py-10 text-sm">해당하는 지출 내역이 없습니다.</div>
         ) : (
           filteredExpenses.map(expense => (
-            <ExpenseItem key={expense.id} expense={expense} onDelete={() => deleteExpense(expense.id)} />
+            <ExpenseItem 
+              key={expense.id} 
+              expense={expense} 
+              onDelete={(e) => { e.stopPropagation(); deleteExpense(expense.id); }} 
+              onClick={() => onEdit?.(expense)}
+            />
           ))
         )}
       </div>
@@ -105,11 +130,14 @@ function FilterBadge({ active, children, onClick }: { active: boolean, children:
   );
 }
 
-function ExpenseItem({ expense, onDelete }: { expense: Expense, onDelete: () => void }) {
+function ExpenseItem({ expense, onDelete, onClick }: { expense: Expense, onDelete: (e: React.MouseEvent) => void, onClick: () => void }) {
   const Icon = CategoryIcons[expense.category] || CategoryIcons['기타'];
   
   return (
-    <div className="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm group relative overflow-hidden">
+    <div 
+      onClick={onClick}
+      className="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm group relative overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+    >
       <div className="w-10 h-10 rounded-full bg-cream-50 flex items-center justify-center shrink-0">
         <Icon size={18} className="text-mocha-700" />
       </div>

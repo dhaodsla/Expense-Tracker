@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ExpenseType, Category, PaymentMethod } from '../types';
+import { useState, useEffect } from 'react';
+import { ExpenseType, Category, PaymentMethod, Expense } from '../types';
 import { useStore } from '../store';
 import { format } from 'date-fns';
 import { X } from 'lucide-react';
@@ -12,8 +12,8 @@ const CATEGORIES: Category[] = [
 
 const PAYMENTS: PaymentMethod[] = ['카드', '현금', '계좌이체', '기타'];
 
-export function AddExpenseDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { addExpense } = useStore();
+export function AddExpenseDialog({ isOpen, onClose, editTarget }: { isOpen: boolean; onClose: () => void; editTarget?: Expense | null }) {
+  const { addExpense, updateExpense } = useStore();
   const [step, setStep] = useState<1 | 2>(1);
   const [type, setType] = useState<ExpenseType>('shared');
   
@@ -24,6 +24,28 @@ export function AddExpenseDialog({ isOpen, onClose }: { isOpen: boolean; onClose
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('카드');
   const [memo, setMemo] = useState('');
 
+  useEffect(() => {
+    if (isOpen) {
+      if (editTarget) {
+        setStep(2);
+        setType(editTarget.type);
+        setDate(editTarget.date);
+        setAmount(editTarget.amount.toLocaleString());
+        setCategory(editTarget.category);
+        setPlace(editTarget.place || '');
+        setPaymentMethod(editTarget.paymentMethod);
+        setMemo(editTarget.memo || '');
+      } else {
+        setStep(1);
+        setAmount('');
+        setPlace('');
+        setMemo('');
+        setCategory('식비');
+        setDate(format(new Date(), 'yyyy-MM-dd'));
+      }
+    }
+  }, [isOpen, editTarget]);
+
   if (!isOpen) return null;
 
   const handleNext = (selectedType: ExpenseType) => {
@@ -33,7 +55,7 @@ export function AddExpenseDialog({ isOpen, onClose }: { isOpen: boolean; onClose
 
   const handleSave = () => {
     if (!amount) return;
-    addExpense({
+    const data = {
       type,
       date,
       amount: parseInt(amount.replace(/,/g, ''), 10) || 0,
@@ -41,7 +63,13 @@ export function AddExpenseDialog({ isOpen, onClose }: { isOpen: boolean; onClose
       place,
       paymentMethod,
       memo
-    });
+    };
+    
+    if (editTarget) {
+      updateExpense(editTarget.id, data);
+    } else {
+      addExpense(data);
+    }
     resetAndClose();
   };
 
@@ -67,7 +95,7 @@ export function AddExpenseDialog({ isOpen, onClose }: { isOpen: boolean; onClose
         
         <header className="p-5 flex justify-between items-center border-b border-cream-100 shrink-0">
           <h2 className="text-lg font-bold text-mocha-900">
-            {step === 1 ? '어떤 지출을 추가할까요?' : '지출 입력하기'}
+            {editTarget ? '지출 수정하기' : (step === 1 ? '어떤 지출을 추가할까요?' : '지출 입력하기')}
           </h2>
           <button onClick={resetAndClose} className="p-2 -mr-2 text-mocha-700 hover:bg-cream-100 rounded-full transition-colors">
             <X size={24} />
@@ -174,7 +202,7 @@ export function AddExpenseDialog({ isOpen, onClose }: { isOpen: boolean; onClose
               disabled={!amount}
               className="w-full bg-sage-500 disabled:opacity-50 disabled:active:scale-100 hover:bg-sage-600 active:scale-95 transition-all text-white py-4 rounded-2xl font-bold text-lg"
             >
-              저장하기
+              {editTarget ? '수정하기' : '저장하기'}
             </button>
           </div>
         )}

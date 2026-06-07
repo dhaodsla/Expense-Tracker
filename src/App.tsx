@@ -10,21 +10,28 @@ import { ExpenseView } from './components/views/ExpenseView';
 import { StatsView } from './components/views/StatsView';
 import { AddExpenseDialog } from './components/AddExpenseDialog';
 import { Home, User, Users, PieChart } from 'lucide-react';
+import { Expense } from './types';
 
 type Tab = 'home' | 'mason' | 'sunyoung' | 'shared' | 'stats';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsAddOpen(true);
+  };
 
   return (
     <div className="bg-cream-50 min-h-screen font-sans text-mocha-900 relative selection:bg-sage-200">
       <main className="mx-auto max-w-md bg-cream-50 min-h-[100dvh] relative shadow-2xl shadow-black/5">
         
         {activeTab === 'home' && <HomeView onOpenAdd={() => setIsAddOpen(true)} />}
-        {activeTab === 'mason' && <ExpenseView type="mason" title="Mason의 개인 지출" />}
-        {activeTab === 'sunyoung' && <ExpenseView type="sunyoung" title="선영의 개인 지출" />}
-        {activeTab === 'shared' && <ExpenseView type="shared" title="함께 쓴 공동 지출" isShared />}
+        {activeTab === 'mason' && <ExpenseView type="mason" title="Mason의 개인 지출" onEdit={handleEditExpense} />}
+        {activeTab === 'sunyoung' && <ExpenseView type="sunyoung" title="선영의 개인 지출" onEdit={handleEditExpense} />}
+        {activeTab === 'shared' && <ExpenseView type="shared" title="함께 쓴 공동 지출" isShared onEdit={handleEditExpense} />}
         {activeTab === 'stats' && <StatsView />}
 
         <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-t border-cream-100 pb-safe">
@@ -38,7 +45,14 @@ function AppContent() {
         </nav>
       </main>
 
-      <AddExpenseDialog isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <AddExpenseDialog 
+        isOpen={isAddOpen} 
+        onClose={() => {
+          setIsAddOpen(false);
+          setEditingExpense(null);
+        }} 
+        editTarget={editingExpense} 
+      />
     </div>
   );
 }
