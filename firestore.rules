@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    function isCoupleMember(coupleId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/couples/$(coupleId)) && 
+             request.auth.uid in get(/databases/$(database)/documents/couples/$(coupleId)).data.members;
+    }
+
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['coupleId', 'createdAt', 'updatedAt']) &&
+               data.keys().size() == 3 &&
+               (data.coupleId is string && data.coupleId.size() <= 128) &&
+               data.createdAt is timestamp &&
+               data.updatedAt is timestamp;
+      }
+      
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+    }
+    
+    match /couples/{coupleId} {
+      function isValidCouple(data) {
+        return data.keys().hasAll(['members', 'createdAt', 'updatedAt']) &&
+               data.keys().size() == 3 &&
+               data.members is list && data.members.size() > 0 && data.members.size() <= 2 &&
+               data.members[0] is string &&
+               data.createdAt is timestamp &&
+               data.updatedAt is timestamp;
+      }
+      
+      allow get: if isSignedIn() && request.auth.uid in existing().members;
+      // Allow create if creating user puts themselves in the members list
+      allow create: if isSignedIn() && isValidId(coupleId) && isValidCouple(incoming()) && 
+                    request.auth.uid in incoming().members &&
+                    incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      // Allow update ONLY if you're already a member (e.g., adding a second member)
+      allow update: if isSignedIn() && isValidId(coupleId) && isValidCouple(incoming()) && 
+                    request.auth.uid in existing().members &&
+                    incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+      
+      match /expenses/{expenseId} {
+        function isValidExpense(data) {
+          return data.keys().hasAll(['coupleId', 'type', 'date', 'amount', 'category', 'place', 'paymentMethod', 'memo', 'createdAt', 'updatedAt']) &&
+                 data.keys().size() == 10 &&
+                 data.coupleId is string && data.coupleId.size() <= 128 &&
+                 data.type is string && data.type.size() <= 20 &&
+                 data.date is string && data.date.size() <= 20 &&
+                 data.amount is number &&
+                 data.category is string && data.category.size() <= 50 &&
+                 data.place is string && data.place.size() <= 200 &&
+                 data.paymentMethod is string && data.paymentMethod.size() <= 50 &&
+                 data.memo is string && data.memo.size() <= 1000 &&
+                 data.createdAt is timestamp &&
+                 data.updatedAt is timestamp;
+        }
+        
+        allow read: if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId) && isValidId(expenseId) && isValidExpense(incoming()) && incoming().coupleId == coupleId && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+        allow update: if isCoupleMember(coupleId) && isValidId(expenseId) && isValidExpense(incoming()) && incoming().coupleId == existing().coupleId && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time;
+        allow delete: if isCoupleMember(coupleId);
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with couple ID",
+      "type": "object",
+      "properties": {
+        "coupleId": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["coupleId", "createdAt", "updatedAt"]
+    },
+    "Couple": {
+      "title": "Couple",
+      "description": "A group of two users",
+      "type": "object",
+      "properties": {
+        "members": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["members", "createdAt", "updatedAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "An expense item",
+      "type": "object",
+      "properties": {
+        "coupleId": { "type": "string" },
+        "type": { "type": "string" },
+        "date": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "place": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "memo": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["coupleId", "type", "date", "amount", "category", "paymentMethod", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profile"
+    },
+    "couples/{coupleId}": {
+      "schema": "Couple",
+      "description": "Couple document"
+    },
+    "couples/{coupleId}/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Expenses for a specific couple"
+    }
+  }
+}

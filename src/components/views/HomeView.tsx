@@ -1,6 +1,9 @@
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { Expense, ExpenseType } from '../../types';
 import { useStore } from '../../store';
+import { LogOut } from 'lucide-react';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebase';
 
 export function HomeView({ onOpenAdd }: { onOpenAdd: () => void }) {
   const { expenses } = useStore();
@@ -30,9 +33,15 @@ export function HomeView({ onOpenAdd }: { onOpenAdd: () => void }) {
 
   return (
     <div className="pb-24 pt-8 px-4 max-w-md mx-auto space-y-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-mocha-900">우리둘 가계부</h1>
-        <p className="text-mocha-700 text-sm mt-1">{format(now, 'yyyy년 M월')}의 기록 흐름</p>
+      <header className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-mocha-900">우리둘 가계부</h1>
+          <p className="text-mocha-700 text-sm mt-1">{format(now, 'yyyy년 M월')}의 기록 흐름</p>
+        </div>
+        <button onClick={() => signOut(auth)} className="p-2 text-mocha-700 hover:bg-cream-100 rounded-full transition-colors flex flex-col items-center gap-1">
+          <LogOut size={20} />
+          <span className="text-[10px] font-medium">로그아웃</span>
+        </button>
       </header>
 
       <section className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">

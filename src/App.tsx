@@ -4,17 +4,20 @@
  */
 
 import { useState } from 'react';
-import { StoreProvider } from './store';
+import { StoreProvider, useStore } from './store';
 import { HomeView } from './components/views/HomeView';
 import { ExpenseView } from './components/views/ExpenseView';
 import { StatsView } from './components/views/StatsView';
 import { AddExpenseDialog } from './components/AddExpenseDialog';
+import { AuthView } from './components/views/AuthView';
+import { SetupCoupleView } from './components/views/SetupCoupleView';
 import { Home, User, Users, PieChart } from 'lucide-react';
 import { Expense } from './types';
 
 type Tab = 'home' | 'mason' | 'sunyoung' | 'shared' | 'stats';
 
 function AppContent() {
+  const { user, coupleId, loading } = useStore();
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -23,6 +26,18 @@ function AppContent() {
     setEditingExpense(expense);
     setIsAddOpen(true);
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-cream-50 flex items-center justify-center text-sage-600 font-bold">로딩중...</div>;
+  }
+
+  if (!user) {
+    return <AuthView />;
+  }
+
+  if (!coupleId) {
+    return <SetupCoupleView />;
+  }
 
   return (
     <div className="bg-cream-50 min-h-screen font-sans text-mocha-900 relative selection:bg-sage-200">
