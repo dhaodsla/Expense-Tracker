@@ -6,9 +6,11 @@ export function AuthView() {
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert('로그인에 실패했습니다.');
+      if (e.code !== 'auth/popup-closed-by-user') {
+        alert('로그인에 실패했습니다. 코드를 확인해주세요: ' + e.code);
+      }
     }
   };
 
